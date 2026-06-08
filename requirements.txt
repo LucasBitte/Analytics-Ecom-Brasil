@@ -2,3 +2,5 @@ pandas
 sqlalchemy
 pyodbc
 jupyter
+kagglehub
+python-dotenv
