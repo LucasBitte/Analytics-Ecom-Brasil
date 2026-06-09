@@ -5,3 +5,17 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 .env
+
+# ======================================================================
+# DBT (DATA BUILD TOOL)
+# ======================================================================
+# Pastas geradas automaticamente com o SQL compilado e artefatos de execução
+dbt/target/
+dbt/dbt_modules/
+dbt/dbt_packages/
+
+# Logs de consultas executadas pelo dbt
+dbt/logs/
+
+# Arquivo de trava de pacotes (opcional, mas recomendado ignorar se mudar muito de ambiente)
+dbt/package-lock.yml

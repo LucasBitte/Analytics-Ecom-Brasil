@@ -1,7 +1,22 @@
-pandas
-sqlalchemy
-pyodbc
-jupyter
-kagglehub
-python-dotenv
-ipython-sql
+# ----------------------------------------------------------------------
+# PIPELINE DE DADOS E ENGENHARIA - OLIST PROJECT
+# ----------------------------------------------------------------------
+
+# Processamento e Manipulação de Dados
+pandas>=2.2.0
+
+# Banco de Dados e Conectividade SQL Server
+SQLAlchemy>=2.0.0
+pyodbc>=5.1.0
+
+# Extensões SQL e Utilitários para Jupyter Notebook
+ipython-sql>=0.5.0
+prettytable==3.9.0
+
+# Gerenciamento de Variáveis de Ambiente e Download de Datasets
+python-dotenv>=1.0.1
+kagglehub>=0.2.5
+
+# Ambiente de Desenvolvimento e Notebooks
+jupyter>=1.0.0
+notebook>=7.1.0

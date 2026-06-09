@@ -1,0 +1,145 @@
+version: 2
+
+sources:
+  - name: olist
+    description: "Fontes de dados brutos do E-commerce Olist no SQL Server"
+    database: "{{ env_var('DB_NAME') }}"
+    schema: dbo
+    tables:
+      - name: customers
+        description: "Dados de clientes"
+        columns:
+          - name: customer_id
+            description: "Identificador único do cliente"
+          - name: customer_unique_id
+            description: "ID único do cliente (pode ter múltiplos registros)"
+          - name: customer_zip_code_prefix
+            description: "Prefixo do CEP do cliente"
+          - name: customer_city
+            description: "Cidade do cliente"
+          - name: customer_state
+            description: "Estado do cliente"
+
+      - name: sellers
+        description: "Dados de vendedores"
+        columns:
+          - name: seller_id
+            description: "Identificador único do vendedor"
+          - name: seller_zip_code_prefix
+            description: "Prefixo do CEP do vendedor"
+          - name: seller_city
+            description: "Cidade do vendedor"
+          - name: seller_state
+            description: "Estado do vendedor"
+
+      - name: products
+        description: "Catálogo de produtos"
+        columns:
+          - name: product_id
+            description: "Identificador único do produto"
+          - name: product_name_lenght
+            description: "Comprimento do nome do produto"
+          - name: product_description_lenght
+            description: "Comprimento da descrição do produto"
+          - name: product_photos_qty
+            description: "Quantidade de fotos do produto"
+          - name: product_weight_g
+            description: "Peso do produto em gramas"
+          - name: product_length_cm
+            description: "Comprimento do produto em cm"
+          - name: product_height_cm
+            description: "Altura do produto em cm"
+          - name: product_width_cm
+            description: "Largura do produto em cm"
+
+      - name: product_categories
+        description: "Categorias de produtos"
+        columns:
+          - name: product_category_name
+            description: "Nome da categoria de produto"
+          - name: product_category_name_english
+            description: "Nome da categoria em inglês"
+
+      - name: orders
+        description: "Pedidos de clientes"
+        columns:
+          - name: order_id
+            description: "Identificador único do pedido"
+          - name: customer_id
+            description: "ID do cliente que fez o pedido"
+          - name: order_status
+            description: "Status do pedido"
+          - name: order_purchase_timestamp
+            description: "Data/hora de compra"
+          - name: order_approved_at
+            description: "Data/hora de aprovação do pagamento"
+          - name: order_delivered_carrier_date
+            description: "Data/hora de entrega pela transportadora"
+          - name: order_delivered_customer_date
+            description: "Data/hora de entrega ao cliente"
+          - name: order_estimated_delivery_date
+            description: "Data/hora estimada de entrega"
+
+      - name: order_items
+        description: "Itens de cada pedido"
+        columns:
+          - name: order_id
+            description: "ID do pedido"
+          - name: order_item_id
+            description: "Sequência do item no pedido"
+          - name: product_id
+            description: "ID do produto"
+          - name: seller_id
+            description: "ID do vendedor"
+          - name: shipping_limit_date
+            description: "Data limite de envio"
+          - name: price
+            description: "Preço do item"
+          - name: freight_value
+            description: "Valor do frete"
+
+      - name: order_payments
+        description: "Pagamentos dos pedidos"
+        columns:
+          - name: order_id
+            description: "ID do pedido"
+          - name: payment_sequential
+            description: "Sequência de pagamento"
+          - name: payment_type
+            description: "Tipo de pagamento"
+          - name: payment_installments
+            description: "Número de parcelas"
+          - name: payment_value
+            description: "Valor do pagamento"
+
+      - name: order_reviews
+        description: "Avaliações dos pedidos"
+        columns:
+          - name: review_id
+            description: "ID da avaliação"
+          - name: order_id
+            description: "ID do pedido"
+          - name: review_score
+            description: "Nota de avaliação (1-5)"
+          - name: review_comment_title
+            description: "Título do comentário"
+          - name: review_comment_message
+            description: "Mensagem do comentário"
+          - name: review_creation_date
+            description: "Data de criação da avaliação"
+          - name: review_answer_timestamp
+            description: "Data de resposta da avaliação"
+
+      - name: geolocation
+        description: "Dados geográficos de cidades"
+        columns:
+          - name: zip_code_prefix
+            description: "Prefixo do CEP"
+          - name: city
+            description: "Nome da cidade"
+          - name: state
+            description: "Sigla do estado"
+          - name: lat
+            description: "Latitude"
+          - name: lng
+            description: "Longitude"

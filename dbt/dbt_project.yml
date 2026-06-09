@@ -1,0 +1,39 @@
+name: olist_analytics
+version: '1.0.0'
+config-version: 2
+profile: olist_profile
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "seed-paths" # Atualizado aqui também se houver
+vars:
+  dbt_utils_dispatch_list:
+    - macro_namespace: dbt_utils
+      search_order: ['dbt_utils', 'dbt_external_macros']
+
+models:
+  olist_analytics:
+    staging:
+      +materialized: view
+      +schema: staging
+      olist:
+        +pre-hook: "{{ log('Processando tabelas staging...', info=true) }}"
+
+    marts:
+      +materialized: table
+      +schema: analytics
+      core:
+        +pre-hook: "{{ log('Construindo dimensões...', info=true) }}"
+      finance:
+        +pre-hook: "{{ log('Construindo tabelas de financeiro...', info=true) }}"
+      marketing_sales:
+        +pre-hook: "{{ log('Construindo tabelas de vendas e marketing...', info=true) }}"
