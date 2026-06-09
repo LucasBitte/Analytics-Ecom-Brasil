@@ -14,7 +14,7 @@ import pandas as pd
 # ============================================================
 
 print("=" * 80)
-print("INGESTAO DE DADOS - OLISTDB")
+print("INGESTAO DE DADOS - OLISTDB (VERSÃO OTIMIZADA 2.0)")
 print("=" * 80)
 
 # Carregar variáveis de ambiente
@@ -43,12 +43,34 @@ odbc_str = (
 connection_url = f"mssql+pyodbc:///?odbc_connect={urllib.parse.quote_plus(odbc_str)}"
 
 try:
-    engine = create_engine(connection_url)
+    # Ativação do motor de alta performance para cargas em lote
+    engine = create_engine(connection_url, fast_executemany=True)
     with engine.connect() as conn:
-        print("\n[OK] Conectado ao banco de dados!")
+        print("\n[OK] Conectado ao banco de dados com fast_executemany=True!")
 except Exception as e:
     print(f"\n[ERRO] Falha ao conectar: {e}")
     sys.exit(1)
+
+# ============================================================
+# LIMPEZA PREVENTIVA (Derruba na ordem correta de constraints)
+# ============================================================
+print("\n[PRE-LOAD] Limpando tabelas antigas para evitar conflitos de Foreign Keys...")
+try:
+    with engine.begin() as conn:
+        conn.execute(text("""
+            DROP TABLE IF EXISTS order_items;
+            DROP TABLE IF EXISTS order_payments;
+            DROP TABLE IF EXISTS order_reviews;
+            DROP TABLE IF EXISTS orders;
+            DROP TABLE IF EXISTS products;
+            DROP TABLE IF EXISTS product_categories;
+            DROP TABLE IF EXISTS sellers;
+            DROP TABLE IF EXISTS customers;
+            DROP TABLE IF EXISTS geolocation;
+        """))
+    print("      [OK] Operação Clean Slate concluída.")
+except Exception as e:
+    print(f"      [AVISO] Falha ao limpar tabelas: {e}")
 
 # ============================================================
 # CRIAR TABELAS
@@ -63,7 +85,6 @@ print("\n[1/9] Criando tabela SELLERS...")
 try:
     with engine.begin() as conn:
         conn.execute(text("""
-            DROP TABLE IF EXISTS sellers;
             CREATE TABLE sellers (
                 seller_id VARCHAR(32) PRIMARY KEY,
                 seller_zip_code_prefix INT NOT NULL,
@@ -80,7 +101,6 @@ print("\n[2/9] Criando tabela CUSTOMERS...")
 try:
     with engine.begin() as conn:
         conn.execute(text("""
-            DROP TABLE IF EXISTS customers;
             CREATE TABLE customers (
                 customer_id VARCHAR(32) PRIMARY KEY,
                 customer_unique_id VARCHAR(32) NOT NULL,
@@ -98,13 +118,12 @@ print("\n[3/9] Criando tabela PRODUCTS...")
 try:
     with engine.begin() as conn:
         conn.execute(text("""
-            DROP TABLE IF EXISTS products;
             CREATE TABLE products (
                 product_id VARCHAR(32) PRIMARY KEY,
                 product_category_name VARCHAR(255),
-                product_name_lenght FLOAT,
-                product_description_lenght FLOAT,
-                product_photos_qty FLOAT,
+                product_name_lenght SMALLINT NULL,        -- CORRIGIDO: Tipo numérico exato
+                product_description_lenght SMALLINT NULL, -- CORRIGIDO: Tipo numérico exato
+                product_photos_qty TINYINT NULL,           -- CORRIGIDO: Tipo leve de 1 byte
                 product_weight_g FLOAT,
                 product_length_cm FLOAT,
                 product_height_cm FLOAT,
@@ -120,7 +139,6 @@ print("\n[4/9] Criando tabela GEOLOCATION...")
 try:
     with engine.begin() as conn:
         conn.execute(text("""
-            DROP TABLE IF EXISTS geolocation;
             CREATE TABLE geolocation (
                 geolocation_zip_code_prefix INT PRIMARY KEY,
                 geolocation_lat FLOAT,
@@ -138,7 +156,6 @@ print("\n[5/9] Criando tabela PRODUCT_CATEGORIES...")
 try:
     with engine.begin() as conn:
         conn.execute(text("""
-            DROP TABLE IF EXISTS product_categories;
             CREATE TABLE product_categories (
                 product_category_name VARCHAR(255) PRIMARY KEY,
                 product_category_name_english VARCHAR(255)
@@ -153,7 +170,6 @@ print("\n[6/9] Criando tabela ORDERS...")
 try:
     with engine.begin() as conn:
         conn.execute(text("""
-            DROP TABLE IF EXISTS orders;
             CREATE TABLE orders (
                 order_id VARCHAR(32) PRIMARY KEY,
                 customer_id VARCHAR(32) NOT NULL,
@@ -175,15 +191,14 @@ print("\n[7/9] Criando tabela ORDER_ITEMS...")
 try:
     with engine.begin() as conn:
         conn.execute(text("""
-            DROP TABLE IF EXISTS order_items;
             CREATE TABLE order_items (
-                order_item_id INT,
                 order_id VARCHAR(32),
+                order_item_id INT,
                 product_id VARCHAR(32),
                 seller_id VARCHAR(32),
                 shipping_limit_date DATETIME,
-                price FLOAT,
-                freight_value FLOAT,
+                price DECIMAL(10,2) NOT NULL,          -- CORRIGIDO: Proteção contra furos financeiros
+                freight_value DECIMAL(10,2) NOT NULL,  -- CORRIGIDO: Proteção contra furos financeiros
                 PRIMARY KEY (order_id, order_item_id),
                 FOREIGN KEY (order_id) REFERENCES orders(order_id),
                 FOREIGN KEY (product_id) REFERENCES products(product_id),
@@ -199,13 +214,12 @@ print("\n[8/9] Criando tabela ORDER_PAYMENTS...")
 try:
     with engine.begin() as conn:
         conn.execute(text("""
-            DROP TABLE IF EXISTS order_payments;
             CREATE TABLE order_payments (
                 order_id VARCHAR(32),
                 payment_sequential INT,
                 payment_type VARCHAR(50),
                 payment_installments INT,
-                payment_value FLOAT,
+                payment_value DECIMAL(10,2) NOT NULL, -- CORRIGIDO: Proteção contra furos financeiros
                 PRIMARY KEY (order_id, payment_sequential),
                 FOREIGN KEY (order_id) REFERENCES orders(order_id)
             );
@@ -219,12 +233,11 @@ print("\n[9/9] Criando tabela ORDER_REVIEWS...")
 try:
     with engine.begin() as conn:
         conn.execute(text("""
-            DROP TABLE IF EXISTS order_reviews;
             CREATE TABLE order_reviews (
                 review_id VARCHAR(32) PRIMARY KEY,
                 order_id VARCHAR(32),
                 review_score INT,
-                review_comment_title VARCHAR(MAX),
+                review_comment_title VARCHAR(200) NULL, -- CORRIGIDO: Otimização de tamanho e indexação
                 review_comment_message VARCHAR(MAX),
                 review_creation_date DATETIME,
                 review_answer_timestamp DATETIME,
@@ -253,7 +266,7 @@ tabelas = {
     'orders': ('data/raw/olist_orders_dataset.csv', ['order_purchase_timestamp', 'order_approved_at', 'order_delivered_carrier_date', 'order_delivered_customer_date', 'order_estimated_delivery_date']),
     'order_items': ('data/raw/olist_order_items_dataset.csv', ['shipping_limit_date']),
     'order_payments': ('data/raw/olist_order_payments_dataset.csv', None),
-    'order_reviews': ('data/raw/olist_order_reviews_dataset.csv', None),
+    'order_reviews': ('data/raw/olist_order_reviews_dataset.csv', ['review_creation_date', 'review_answer_timestamp']),
 }
 
 total_geral = 0
@@ -276,11 +289,12 @@ for idx, (tabela, (arquivo, date_cols)) in enumerate(tabelas.items(), 1):
             df = df.drop_duplicates(subset=['order_id'])
         elif tabela == 'order_reviews':
             df = df.drop_duplicates(subset=['review_id'])
-            df['review_creation_date'] = pd.to_datetime(df['review_creation_date'], errors='coerce')
-            df['review_answer_timestamp'] = pd.to_datetime(df['review_answer_timestamp'], errors='coerce')
 
-        # Inserir no banco
-        df.to_sql(tabela, engine, if_exists='append', index=False)
+        # CORREÇÃO CRÍTICA: Transforma NaNs soltos em None para evitar erros de cast no DECIMAL/INT do SQL Server
+        df = df.where(pd.notnull(df), None)
+
+        # Inserir no banco em lotes performáticos
+        df.to_sql(tabela, engine, if_exists='append', index=False, chunksize=10000)
 
         total_geral += len(df)
         print(f"      [OK] {len(df):>10,} registros inseridos")
@@ -321,7 +335,7 @@ try:
         print("\n" + "=" * 80)
         print("RESULTADO FINAL")
         print("=" * 80)
-        print(f"\nTabelas criadas: {len(tabelas_encontradas)}")
+        print(f"\Tabelas criadas: {len(tabelas_encontradas)}")
         print(f"Total de registros: {total:,}")
 
         if len(tabelas_encontradas) == 9 and total > 400000:
