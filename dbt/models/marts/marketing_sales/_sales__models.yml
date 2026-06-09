@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: "Tabela Fato de cabeçalho de pedidos. Mede o funil e tempos de entrega."
+    columns:
+      - name: order_sk
+        tests:
+          - unique
+          - not_null
+      - name: customer_sk
+        description: "Chave estrangeira ligada à dim_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_sk
+
+  - name: fct_order_items
+    description: "Tabela Fato granular ao nível de item do carrinho de compras."
+    columns:
+      - name: order_item_sk
+        tests:
+          - unique
+          - not_null
+      - name: product_sk
+        description: "Garante que o produto vendido existe na dim_products."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_products')
+              field: product_sk
+      - name: seller_sk
+        description: "Garante que o vendedor do item existe na dim_sellers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_sellers')
+              field: seller_sk
+
+  - name: fct_order_reviews
+    description: "Tabela Fato de avaliações dos pedidos (CSAT)."
+    columns:
+      - name: review_sk
+        tests:
+          - unique
+          - not_null
+      - name: order_sk
+        description: "Chave estrangeira vinculada à fct_orders."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_orders')
+              field: order_sk
+      - name: csat_score
+        description: "Nota de satisfação do cliente (1 a 5)."
+        tests:
+          - not_null

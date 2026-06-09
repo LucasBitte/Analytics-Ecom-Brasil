@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "Dimensão contendo os dados demográficos limpos dos clientes."
+    columns:
+      - name: customer_sk
+        description: "Chave substituta única gerada via Hash MD5."
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_products
+    description: "Dimensão consolidada de produtos com tradução de categoria."
+    columns:
+      - name: product_sk
+        description: "Chave substituta única gerada via Hash MD5."
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_sellers
+    description: "Dimensão contendo os dados dos vendedores parceiros."
+    columns:
+      - name: seller_sk
+        description: "Chave substituta única gerada via Hash MD5."
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_calendar
+    description: "Tabela dimensional de calendário cobrindo o período de 2015 a 2030."
+    columns:
+      - name: date_key
+        description: "Chave primária no formato numérico YYYYMMDD."
+        tests:
+          - unique
+          - not_null
+      - name: flag_dia_util
+        description: "Flag indicando se o dia é útil (1) ou final de semana/feriado (0)."
+        tests:
+          - not_null
+
+  - name: dim_geolocation
+    description: "Dimensão de geolocalização agregada por prefixo de CEP."
+    columns:
+      - name: geolocation_sk
+        description: "Chave substituta única do CEP gerada via Hash MD5."
+        tests:
+          - unique
+          - not_null

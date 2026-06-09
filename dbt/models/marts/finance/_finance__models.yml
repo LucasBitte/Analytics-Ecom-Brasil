@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: fct_order_payments
+    description: "Tabela Fato de pagamentos dos pedidos. Contém os valores e métodos de pagamento."
+    columns:
+      - name: payment_sk
+        description: "Chave primária substituta gerada via Hash MD5."
+        tests:
+          - unique
+          - not_null
+      - name: order_sk
+        description: "Chave estrangeira vinculada à fct_orders."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_orders')
+              field: order_sk
+      - name: payment_amount
+        description: "Valor total do pagamento realizado."
+        tests:
+          - not_null
