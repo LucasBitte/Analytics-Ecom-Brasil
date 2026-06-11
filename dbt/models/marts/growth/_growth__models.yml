@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: mart_customer_rfm
+    description: "Tabela de segmentação avançada de clientes utilizando a metodologia RFM (Recência, Frequência e Valor Monetário) para a base Olist."
+    columns:
+      - name: customer_unique_id
+        description: "Chave primária do cliente no modelo analítico."
+        tests:
+          - unique
+          - not_null
+      - name: customer_segmentation
+        description: "Segmento final de marketing atribuído ao cliente."
